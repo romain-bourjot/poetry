@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      dockerfile: "./docker/Dockerfile"
+      target: development
+      context: ./backend
+    volumes:
+      - ./backend/common/:/app/common
+      - ./backend/functions/:/app/functions
+      - ./backend/serverless.yml:/app/serverless.yml
+    environment:
+      API_CERTIFICATE_NAME: mockcert
+      API_DOMAIN_NAME: localhost:3000
+      SERVERLESS_APP: mockapp
+      SERVERLESS_ORG: mockorg
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      dockerfile: "./docker/Dockerfile"
+      target: development
+      context: ./frontend
+    volumes:
+      - ./frontend/public/:/app/public
+      - ./frontend/src/:/app/src
+      - ./frontend/quasar.config.js:/app/quasar.config.js
+    ports:
+      - "9000:9000"

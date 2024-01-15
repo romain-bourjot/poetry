@@ -1,0 +1,57 @@
+name: Deploy
+run-name: ${{ github.actor }} is deploying 🚀
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+        - shell: bash
+          working-directory: ./frontend
+          env:
+            API_URL: "https://${{ secrets.TF_VAR_BACKEND_DOMAIN_NAME }}"
+          run: |
+            npm ci > /dev/null
+            npm run build > /dev/null
+        - shell: bash
+          working-directory: ./backend
+          run: |
+            npm ci > /dev/null
+        - shell: bash
+          run: |
+            aws configure set aws_access_key_id ${{ secrets.AWS_PROFILE_ACCESS_KEY_ID }} --profile ${{ secrets.AWS_PROFILE_NAME }}
+            aws configure set aws_secret_access_key ${{ secrets.AWS_PROFILE_SECRET_ACCESS_KEY }} --profile ${{ secrets.AWS_PROFILE_NAME }}
+            aws configure set region ${{ secrets.AWS_PROFILE_REGION }} --profile ${{ secrets.AWS_PROFILE_NAME }}
+        - shell: bash
+          env:
+            SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+            TF_VAR_AWS_PROFILE: ${{ secrets.TF_VAR_AWS_PROFILE }}
+            TF_VAR_STATE_BUCKET_NAME: ${{ secrets.TF_VAR_STATE_BUCKET_NAME }}
+            TF_VAR_STATE_BUCKET_KEY: ${{ secrets.TF_VAR_STATE_BUCKET_KEY }}
+            TF_VAR_STATE_BUCKET_REGION: ${{ secrets.TF_VAR_STATE_BUCKET_REGION }}
+            TF_VAR_AWS_PROJECT_TAG: ${{ secrets.TF_VAR_AWS_PROJECT_TAG }}
+            TF_VAR_BACKEND_REGION: ${{ secrets.TF_VAR_BACKEND_REGION }}
+            TF_VAR_BACKEND_CERTIFICATE_NAME: ${{ secrets.TF_VAR_BACKEND_CERTIFICATE_NAME }}
+            TF_VAR_BACKEND_DOMAIN_NAME: ${{ secrets.TF_VAR_BACKEND_DOMAIN_NAME }}
+            TF_VAR_SERVERLESS_APP: ${{ secrets.TF_VAR_SERVERLESS_APP }}
+            TF_VAR_SERVERLESS_ORG: ${{ secrets.TF_VAR_SERVERLESS_ORG }}
+            TF_VAR_FRONTEND_DOMAIN_NAME: ${{ secrets.TF_VAR_FRONTEND_DOMAIN_NAME }}
+            TF_VAR_FRONTEND_HOSTED_ZONE: ${{ secrets.TF_VAR_FRONTEND_HOSTED_ZONE }}
+            TF_VAR_FRONTEND_SSL_CERTIFICATE_ARN: ${{ secrets.TF_VAR_FRONTEND_SSL_CERTIFICATE_ARN }}
+          working-directory: ./infrastructure
+          run: |
+            terraform init \
+              -backend-config="bucket=${TF_VAR_STATE_BUCKET_NAME}" \
+              -backend-config="key=${TF_VAR_STATE_BUCKET_KEY}" \
+              -backend-config="region=${TF_VAR_STATE_BUCKET_REGION}" \
+              -backend-config="profile=${TF_VAR_AWS_PROFILE}" \
+            && \
+            terraform apply -auto-approve
+            

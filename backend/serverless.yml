@@ -1,0 +1,33 @@
+service: api
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-domain-manager
+
+custom:
+  customDomain:
+    domainName: ${env:API_DOMAIN_NAME}
+    basePath: ''
+    apiType: 'http'
+    createRoute53Record: true
+    certificateName: ${env:API_CERTIFICATE_NAME}
+    endpointType: 'REGIONAL'
+    autoDomain: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  httpApi:
+    cors: true
+
+functions:
+  create-poem:
+    handler: functions/poetry/index.handler
+    name: ${sls:stage}_poetry_create-poem
+    timeout: 30
+    events:
+      - httpApi:
+          path: /poetry/poem
+          method: post
