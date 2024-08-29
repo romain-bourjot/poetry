@@ -53,5 +53,5 @@ jobs:
               -backend-config="region=${TF_VAR_STATE_BUCKET_REGION}" \
               -backend-config="profile=${TF_VAR_AWS_PROFILE}" \
             && \
-            terraform apply -auto-approve
+            terraform apply -destroy -auto-approve
             
