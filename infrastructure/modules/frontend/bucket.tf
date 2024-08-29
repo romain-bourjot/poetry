@@ -2,7 +2,7 @@ resource "aws_s3_bucket" "frontend-bucket" {
   bucket = var.domain-name
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   tags = var.aws-tags
